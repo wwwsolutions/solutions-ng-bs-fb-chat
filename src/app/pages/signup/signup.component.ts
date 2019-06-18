@@ -1,20 +1,47 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, OnDestroy } from '@angular/core';
+import { Router } from '@angular/router';
 import { FormBuilder, FormGroup, Validators } from '@angular/forms';
+
+// CLASSES & ENUMS
+import { Alert } from 'src/app/classes/alert';
+import { AlertType } from './../../enums/alert-type.enum';
+
+// SERVICES
+import { LoadingService } from './../../services/loading.service';
+import { AuthService } from './../../services/auth.service';
+import { AlertService } from 'src/app/services/alert.service';
+
+// RXJS
+import { Subscription } from 'rxjs';
+
 
 @Component({
   selector: 'app-signup',
   templateUrl: './signup.component.html',
   styleUrls: ['./signup.component.scss']
 })
-export class SignupComponent implements OnInit {
+export class SignupComponent implements OnInit, OnDestroy {
 
   public signupForm: FormGroup;
+  private subscriptions: Subscription[] = [];
 
-  constructor(private fb: FormBuilder) {
+  constructor(
+    private fb: FormBuilder,
+    private alertService: AlertService,
+    private auth: AuthService,
+    private loadingService: LoadingService,
+    private router: Router
+    ) {
     this.createForm();
    }
 
   ngOnInit() {
+
+  }
+
+  ngOnDestroy() {
+    // UNSUBSCRIBE
+    this.subscriptions.forEach( sub => sub.unsubscribe());
   }
 
   private createForm(): void {
@@ -27,9 +54,21 @@ export class SignupComponent implements OnInit {
   }
 
   public submit(): void {
-    // TODO call the auth service
-    const {firstName, lastName, email, password} = this.signupForm.value;
-    console.log(`First Name: ${firstName}, Last Name: ${lastName}, Email: ${email}, Password: ${password}`);
+    if (this.signupForm.valid) {
+      const {firstName, lastName, email, password} = this.signupForm.value;
+      // TODO call the auth service
+      this.subscriptions.push(
+        this.auth.signup(firstName, lastName, email, password).subscribe(success => {
+          if (success) {
+            this.router.navigate(['/chat']);
+          }
+          this.loadingService.isLoading.next(false);
+        })
+      );
+    } else {
+      const failedSignedAlert = new Alert('Please enter a valid name, email and password, try again.', AlertType.Danger);
+      this.alertService.alerts.next(failedSignedAlert);
+    }
   }
 
 }

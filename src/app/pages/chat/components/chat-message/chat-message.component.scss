@@ -3,13 +3,10 @@
 .chat-message {
   padding: 1.5em;
 
-  img {
-    display: block;
+  .image-wrapper {
     margin-right: 1em;
-    min-height: 100px;
-    height: 100px;
-    min-width: 100px;
-    width: 100px;
+    height: 50px;
+    width: 50px;
   }
 
   .name {
